@@ -1,6 +1,7 @@
 import pygame
 import time
 import random
+import numpy as np
 
 pygame.init()
 
@@ -189,7 +190,7 @@ def game_loop():
 
     x_change = 0
 
-    thing_startx = random.randrange(0, display_width)
+    thing_startx = random.randrange(display_width/2, display_width)
     thing_starty = -600
     thing_speed = 4
     thing_width = 100
@@ -201,12 +202,37 @@ def game_loop():
 
     gameExit = False
 
+    #### AI Code ####
+
+    num_speeds = 5
+
+    speeds = [-10, -5, 0, 5, 10]
+
+    dodges = [0] * num_speeds
+    crashes = [0] * num_speeds
+
+    seen = False
+
     while not gameExit:
 
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
                 pygame.quit()
                 quit()
+
+
+        if not seen:
+            seen = True
+            speed = 0
+            max_random = 0
+
+            for i in range(0, num_speeds):
+                random_beta = random.betavariate(dodges[i] + 1, crashes[i] + 1)
+                if random_beta > max_random:
+                    max_random = random_beta
+                    speed = i
+
+            x_change = speeds[speed]
 
         x += x_change
         gameDisplay.fill(white)
@@ -218,19 +244,19 @@ def game_loop():
         car(x, y)
         things_dodged(dodged)
 
-        mouse_pressed = pygame.mouse.get_pressed()
-
-        if mouse_pressed[0]:
-            mouse_x, mouse_y = pygame.mouse.get_pos()
-
-            if mouse_x < x + car_width/2 - 10:
-                x_change = (mouse_x - (x+car_width/2))*0.2
-            elif mouse_x > x + car_width/2 + 10:
-                x_change = (mouse_x - (x+car_width/2))*0.2
-            else:
-                x_change = 0
-        else:
-            x_change = 0
+        # mouse_pressed = pygame.mouse.get_pressed()
+        #
+        # if mouse_pressed[0]:
+        #     mouse_x, mouse_y = pygame.mouse.get_pos()
+        #
+        #     if mouse_x < x + car_width/2 - 10:
+        #         x_change = (mouse_x - (x+car_width/2))*0.2
+        #     elif mouse_x > x + car_width/2 + 10:
+        #         x_change = (mouse_x - (x+car_width/2))*0.2
+        #     else:
+        #         x_change = 0
+        # else:
+        #     x_change = 0
 
         if x > display_width - car_width:
             x = display_width - car_width
@@ -239,16 +265,17 @@ def game_loop():
 
         if thing_starty > display_height:
             thing_starty = 0 - thing_height
-            thing_startx = random.randrange(0, display_width)
+            thing_startx = random.randrange(display_width/2, display_width)
             dodged += 1
             thing_speed += 1
             thing_width += (dodged * 1.2)
+            dodges[speed] += 1
+
+            seen = False
 
         if y < thing_starty + thing_height:
-            print('y crossover')
 
             if x > thing_startx and x < thing_startx + thing_width or x + car_width > thing_startx and x + car_width < thing_startx + thing_width:
-                print('x crossover')
                 crash()
 
                 x = (display_width * 0.45)
@@ -256,7 +283,7 @@ def game_loop():
 
                 x_change = 0
 
-                thing_startx = random.randrange(0, display_width)
+                thing_startx = random.randrange(display_width/2, display_width)
                 thing_starty = -600
                 thing_speed = 4
                 thing_width = 100
@@ -264,9 +291,13 @@ def game_loop():
 
                 thingCount = 1
 
+                crashes[speed] += 1
+
                 dodged = 0
 
                 gameExit = False
+
+                seen = False
 
         pygame.display.update()
         clock.tick(60)
