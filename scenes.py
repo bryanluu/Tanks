@@ -1,6 +1,7 @@
 import pygame
 import utilities
 import geometry as geo
+from tanks import Tank
 
 class SceneBase:
     def __init__(self):
@@ -8,7 +9,7 @@ class SceneBase:
 
     # only needs to be called once throughout main loop
     def initGraphics(self, screen):
-        self.screen =  screen
+        self.screen = screen
 
     def ProcessInput(self, events, pressed_keys):
         print("uh-oh, you didn't override this in the child class")
@@ -92,3 +93,31 @@ class BallScene(SceneBase):
         self.screen.fill((255, 255, 255))
         self.screen.blit(self.ball, self.ballrect)
         pygame.display.flip()
+
+
+class Tanks(SceneBase):
+    def __init__(self):
+        SceneBase.__init__(self)
+        self.elasticity = 0.8
+        self.friction = 0.1
+        self.tanks = []
+        self.tanks.append(Tank((50, 50), (255, 0, 0)))
+
+    def initGraphics(self, screen):
+        self.screen = screen
+
+    def ProcessInput(self, events, pressed_keys):
+        pass
+
+    def Update(self):
+        pass
+
+    def Render(self):
+        # For the sake of brevity, the title scene is a blank black screen
+        self.screen.fill((255, 255, 255))
+
+        for tank in self.tanks:
+            tank.draw(self.screen)
+
+        pygame.display.flip()
+
