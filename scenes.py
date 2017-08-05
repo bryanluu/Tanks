@@ -2,6 +2,7 @@ import pygame
 import utilities
 import geometry as geo
 from tanks import Tank
+import math
 
 class SceneBase:
     def __init__(self):
@@ -98,19 +99,42 @@ class BallScene(SceneBase):
 class Tanks(SceneBase):
     def __init__(self):
         SceneBase.__init__(self)
+        self.gravity = geo.Vector2D(0, 1)
         self.elasticity = 0.8
         self.friction = 0.1
         self.tanks = []
-        self.tanks.append(Tank((50, 50), (255, 0, 0)))
+        self.tanks.append(Tank((0, 0), (255, 0, 0)))
 
     def initGraphics(self, screen):
         self.screen = screen
 
     def ProcessInput(self, events, pressed_keys):
-        pass
+
+        if len(events) > 0:
+            print(events)
 
     def Update(self):
-        pass
+        mouse = pygame.mouse.get_pos()
+
+        info = pygame.display.Info()
+        screenWidth, screenHeight = info.current_w, info.current_h
+
+        for tank in self.tanks:
+            tank.v += self.gravity
+            tank.rect.move_ip(*tank.v)
+
+            if tank.rect.y > screenHeight - tank.rect.height:
+                tank.rect.y = screenHeight - tank.rect.height
+
+            if tank.rect.x < 0:
+                tank.rect.x = 0
+            elif tank.rect.x > screenWidth - tank.rect.width:
+                tank.rect.x = screenWidth - tank.rect.width
+
+            origin = tank.origin()
+            dr = geo.Vector2D(*mouse) - geo.Vector2D(*origin)
+
+            tank.angle = (math.degrees(geo.Vector2D.angle_between(dr, geo.Vector2D(1, 0))))
 
     def Render(self):
         # For the sake of brevity, the title scene is a blank black screen

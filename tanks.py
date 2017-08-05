@@ -4,7 +4,8 @@ import math
 
 class Tank:
     def __init__(self, pos, color, facing_right=True):
-        self.rect = pygame.Rect(pos[0], pos[1], 60, 60)
+        self.rect = pygame.Rect(0, 0, 60, 60)
+        self.rect.center = pos
         self.color = color
         self.speed = 0
         self.angle = 45
@@ -16,9 +17,13 @@ class Tank:
         self.gun.set_colorkey(self.transparent)
         self.gun.fill(self.transparent)
         self.faceright = facing_right
+        self.v = geo.Vector2D.zero()
 
     def draw(self, screen):
         x, y, w, h = self.rect
+
+        self.surface.fill(self.transparent)
+        self.gun.fill(self.transparent)
 
         if self.faceright:
             pygame.draw.rect(self.gun, self.color, (30, 30, 30, 5))
@@ -36,3 +41,8 @@ class Tank:
         pygame.draw.rect(self.surface, self.color, ((int(w/2) - 15), h - 10, 30, 10))
 
         screen.blit(self.surface, self.rect)
+
+    def origin(self):
+        x, y, w, h = self.rect
+
+        return x+int(w/2), y + h-10
