@@ -104,20 +104,35 @@ class Tanks(SceneBase):
         self.friction = 0.1
         self.tanks = []
         self.tanks.append(Tank((0, 0), (255, 0, 0)))
+        self.balls = []
 
     def initGraphics(self, screen):
         self.screen = screen
 
     def ProcessInput(self, events, pressed_keys):
-
-        if len(events) > 0:
-            print(events)
+        for event in events:
+            if event.type == pygame.MOUSEBUTTONUP:
+                p1 = self.tanks[0]
+                
+                ball = p1.shoot()
+                self.balls.append(ball)
 
     def Update(self):
         mouse = pygame.mouse.get_pos()
+        pressed = pygame.mouse.get_pressed()
 
         info = pygame.display.Info()
         screenWidth, screenHeight = info.current_w, info.current_h
+
+        if pressed[0]:
+            p1 = self.tanks[0]
+            p1.power += p1.power_dir * p1.power_speed
+            if p1.power >= 1:
+                p1.power_dir *= -1
+                p1.power = 1
+            elif p1.power <= 0:
+                p1.power_dir *= -1
+                p1.power = 0
 
         for tank in self.tanks:
             tank.v += self.gravity
@@ -135,10 +150,25 @@ class Tanks(SceneBase):
             dr = geo.Vector2D(*mouse) - geo.Vector2D(*origin)
 
             tank.angle = (math.degrees(geo.Vector2D.angle_between(dr, geo.Vector2D(1, 0))))
+        
+        for ball in self.balls:
+            ball.v += self.gravity
+            ball.rect.move_ip(*ball.v)
+            
+            if ball.rect.y > screenHeight - ball.rect.height:
+                self.balls.remove(ball)
+
+            if ball.rect.x < 0:
+                self.balls.remove(ball)
+            elif ball.rect.x > screenWidth - ball.rect.width:
+                self.balls.remove(ball)
 
     def Render(self):
         # For the sake of brevity, the title scene is a blank black screen
         self.screen.fill((255, 255, 255))
+
+        for ball in self.balls:
+            ball.draw(self.screen)
 
         for tank in self.tanks:
             tank.draw(self.screen)
