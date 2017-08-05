@@ -23,6 +23,8 @@ class Tank:
         self.power_dir = 1
         self.power_speed = 0.03
 
+        self.cannon_sound = utilities.load_sound("cannon.wav")
+
     def draw(self, screen):
         x, y, w, h = self.rect
 
@@ -65,6 +67,11 @@ class Tank:
         ball = Cannonball(pos, geo.Vector2D(self.power * ball_speed * math.cos(math.radians(self.angle)), -self.power * ball_speed * math.sin(math.radians(self.angle))))
 
         ball.initGraphics()
+
+        ball.sound = utilities.load_sound('explosion.wav')
+
+        pygame.mixer.Sound.play(self.cannon_sound)
+
         return ball
 
 class Cannonball:

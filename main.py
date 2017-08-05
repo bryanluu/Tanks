@@ -8,9 +8,9 @@ import os
 # os.environ["SDL_MOUSEDEV"] = "/dev/input/touchscreen"
 # os.environ["SDL_MOUSEDRV"] = "TSLIB"
 
+pygame.init()
 
 def run_game(width, height, fps, starting_scene):
-    pygame.init()
     screen = pygame.display.set_mode((width, height))
     clock = pygame.time.Clock()
 

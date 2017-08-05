@@ -156,11 +156,14 @@ class Tanks(SceneBase):
             ball.rect.move_ip(*ball.v)
             
             if ball.rect.y > screenHeight - ball.rect.height:
+                pygame.mixer.Sound.play(ball.sound)
                 self.balls.remove(ball)
 
             if ball.rect.x < 0:
+                pygame.mixer.Sound.play(ball.sound)
                 self.balls.remove(ball)
             elif ball.rect.x > screenWidth - ball.rect.width:
+                pygame.mixer.Sound.play(ball.sound)
                 self.balls.remove(ball)
 
     def Render(self):
