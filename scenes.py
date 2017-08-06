@@ -105,6 +105,7 @@ class Tanks(SceneBase):
         self.tanks = []
         self.tanks.append(Tank((0, 0), (255, 0, 0)))
         self.balls = []
+        self.explosions = []
 
     def initGraphics(self, screen):
         self.screen = screen
@@ -130,9 +131,9 @@ class Tanks(SceneBase):
             if p1.power >= 1:
                 p1.power_dir *= -1
                 p1.power = 1
-            elif p1.power <= 0:
+            elif p1.power <= 0.5:
                 p1.power_dir *= -1
-                p1.power = 0
+                p1.power = 0.5
 
         for tank in self.tanks:
             tank.v += self.gravity
@@ -150,25 +151,29 @@ class Tanks(SceneBase):
             dr = geo.Vector2D(*mouse) - geo.Vector2D(*origin)
 
             tank.angle = (math.degrees(geo.Vector2D.angle_between(dr, geo.Vector2D(1, 0))))
-        
-        for ball in self.balls:
+
+        for i, ball in enumerate(self.balls):
             ball.v += self.gravity
             ball.rect.move_ip(*ball.v)
             
-            if ball.rect.y > screenHeight - ball.rect.height:
+            if ball.rect.y > screenHeight - ball.rect.height or ball.rect.x < 0 or ball.rect.x > screenWidth - ball.rect.width:
                 pygame.mixer.Sound.play(ball.sound)
-                self.balls.remove(ball)
-
-            if ball.rect.x < 0:
-                pygame.mixer.Sound.play(ball.sound)
-                self.balls.remove(ball)
-            elif ball.rect.x > screenWidth - ball.rect.width:
-                pygame.mixer.Sound.play(ball.sound)
-                self.balls.remove(ball)
+                self.explosions.append((ball.explode(), ball.pos()))
+                self.balls.pop(i)
 
     def Render(self):
-        # For the sake of brevity, the title scene is a blank black screen
         self.screen.fill((255, 255, 255))
+
+        for i, tup in enumerate(self.explosions):
+            exp, pos = tup
+            if exp.i < len(exp.images):
+                img = exp.next()
+                img = pygame.transform.scale(img, (50, 50))
+                x, y, w, h = img.get_rect()
+                pos = pos[0] - int(w/2), pos[1] - int(h/2)
+                self.screen.blit(img, pos)
+            else:
+                self.explosions.pop(i)
 
         for ball in self.balls:
             ball.draw(self.screen)

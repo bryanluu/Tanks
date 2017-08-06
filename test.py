@@ -1,124 +1,39 @@
+"""
+Sprite strip animator demo
+
+Requires spritesheet.spritesheet and the Explode1.bmp through Explode5.bmp
+found in the sprite pack at
+http://lostgarden.com/2005/03/download-complete-set-of-sweet-8-bit.html
+
+I had to make the following addition to method spritesheet.image_at in
+order to provide the means to handle sprite strip cells with borders:
+
+            elif type(colorkey) not in (pygame.Color,tuple,list):
+                colorkey = image.get_at((colorkey,colorkey))
+"""
+import sys
 import pygame
-import time
-import random
+from pygame.locals import Color, KEYUP, K_ESCAPE, K_RETURN
+import utilities
 
-pygame.init()
+surface = pygame.display.set_mode((256,256))
+FPS = 120
+frames = FPS / 12
+strips = utilities.SpriteStripAnim('explosion.png', (0,0,256,256), (8, 7), colorkey=-1, frames=frames, loop=True)
 
-display_width = 800
-display_height = 600
-
-black = (0, 0, 0)
-white = (255, 255, 255)
-red = (255, 0, 0)
-
-
-gameDisplay = pygame.display.set_mode((display_width, display_height))
-pygame.display.set_caption('A bit Racey')
+white = Color('white')
 clock = pygame.time.Clock()
-
-carImg = pygame.image.load('racecar.png')
-carImg = pygame.transform.rotate(carImg, 90)
-w, h = carImg.get_size()
-scale = 0.2
-car_width, car_height = int(w * scale), int(h * scale)
-carImg = pygame.transform.scale(carImg, (car_width, car_height))
-
-
-#######
-def things(thingx, thingy, thingw, thingh, color):
-    pygame.draw.rect(gameDisplay, color, [thingx, thingy, thingw, thingh])
-
-
-#######
-
-def things_dodged(count):
-    font = pygame.font.SysFont(None, 25)
-    text = font.render("Dodged: "+str(count), True, black)
-    gameDisplay.blit(text,(0,0))
-
-def car(x, y):
-    gameDisplay.blit(carImg, (x, y))
-
-
-def text_objects(text, font):
-    textSurface = font.render(text, True, black)
-    return textSurface, textSurface.get_rect()
-
-
-def message_display(text):
-    largeText = pygame.font.Font('freesansbold.ttf', 115)
-    TextSurf, TextRect = text_objects(text, largeText)
-    TextRect.center = ((display_width / 2), (display_height / 2))
-    gameDisplay.blit(TextSurf, TextRect)
-
-    pygame.display.update()
-
-    time.sleep(2)
-
-    game_loop()
-
-
-def crash():
-    message_display('You Crashed')
-
-
-def game_loop():
-    x = (display_width * 0.45)
-    y = (display_height * 0.8)
-
-    x_change = 0
-    ######
-    thing_startx = random.randrange(0, display_width)
-    thing_starty = -600
-    thing_speed = 7
-    thing_width = 100
-    thing_height = 100
-    ######
-    gameExit = False
-
-    while not gameExit:
-
-        for event in pygame.event.get():
-            if event.type == pygame.QUIT:
-                pygame.quit()
-                quit()
-
-            if event.type == pygame.MOUSEBUTTONDOWN:
-                print(event.pos)
-                print(x, y)
-                if event.pos[0] < x + car_width/2 - 10:
-                    x_change = -5
-                elif event.pos[0] > x + car_width/2 + 10:
-                    x_change = 5
-                else:
-                    x_change = 0
-
-            if event.type == pygame.MOUSEBUTTONUP:
-                x_change = 0
-
-        x += x_change
-        gameDisplay.fill(white)
-
-        ##########
-        # things(thingx, thingy, thingw, thingh, color)
-        things(thing_startx, thing_starty, thing_width, thing_height, black)
-        thing_starty += thing_speed
-        car(x, y)
-        ##########
-        if x > display_width - car_width or x < 0:
-            crash()
-
-        if thing_starty > display_height:
-            thing_starty = 0 - thing_height
-            thing_startx = random.randrange(0,display_width)
-            dodged += 1
-            thing_speed += 1
-            thing_width += (dodged * 1.2)
-
-        pygame.display.update()
-        clock.tick(60)
-
-
-game_loop()
-pygame.quit()
-quit()
+strips.iter()
+image = strips.next()
+while True:
+    for e in pygame.event.get():
+        if e.type == KEYUP:
+            if e.key == K_ESCAPE:
+                sys.exit()
+            elif e.key == K_RETURN:
+                strips.iter()
+    surface.fill(white)
+    surface.blit(image, (0,0))
+    pygame.display.flip()
+    image = strips.next()
+    clock.tick(FPS)

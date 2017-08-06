@@ -10,6 +10,7 @@ import os
 
 pygame.init()
 
+
 def run_game(width, height, fps, starting_scene):
     screen = pygame.display.set_mode((width, height))
     clock = pygame.time.Clock()
@@ -18,7 +19,7 @@ def run_game(width, height, fps, starting_scene):
 
     initialized = False
 
-    while active_scene != None:
+    while active_scene:
 
         if not initialized:
             active_scene.initGraphics(screen)
@@ -58,4 +59,4 @@ def run_game(width, height, fps, starting_scene):
 # The rest is code where you implement your game using the Scenes model
 
 
-run_game(320, 240, 60, Tanks())
+run_game(500, 500, 60, Tanks())

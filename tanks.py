@@ -19,7 +19,7 @@ class Tank:
         self.gun.fill(self.transparent)
         self.faceright = facing_right
         self.v = geo.Vector2D.zero()
-        self.power = 0
+        self.power = 0.5
         self.power_dir = 1
         self.power_speed = 0.03
 
@@ -76,14 +76,24 @@ class Tank:
 
 class Cannonball:
     def __init__(self, pos, velocity):
-        self.pos = pos
+        self.initialPos = pos
         self.v = velocity
 
     def initGraphics(self):
         self.img = utilities.load_image('ball.png')
         self.img = pygame.transform.scale(self.img, (5, 5))
+        self.img.set_colorkey((255, 255, 255))
         self.rect = self.img.get_rect()
-        self.rect.x, self.rect.y = self.pos
+        self.rect.x, self.rect.y = self.initialPos
 
     def draw(self, screen):
         screen.blit(self.img, self.rect)
+
+    def pos(self):
+        return self.rect.x, self.rect.y
+
+    def explode(self):
+        strips = utilities.SpriteStripAnim('explosion.png', (0, 0, 256, 256), (8,7), colorkey=-1, frames=1)
+        strips.iter()
+
+        return strips
