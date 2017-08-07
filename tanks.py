@@ -3,8 +3,12 @@ import pygame
 import utilities
 import math
 
-class Tank:
+
+class Tank(pygame.sprite.Sprite):
+
     def __init__(self, pos, color, facing_right=True):
+        # Call the parent class (Sprite) constructor
+        pygame.sprite.Sprite.__init__(self)
         self.rect = pygame.Rect(0, 0, 60, 60)
         self.rect.center = pos
         self.color = color
@@ -74,8 +78,12 @@ class Tank:
 
         return ball
 
-class Cannonball:
+class Cannonball(pygame.sprite.Sprite):
+
     def __init__(self, pos, velocity):
+        # Call the parent class (Sprite) constructor
+        pygame.sprite.Sprite.__init__(self)
+
         self.initialPos = pos
         self.v = velocity
 
@@ -97,3 +105,32 @@ class Cannonball:
         strips.iter()
 
         return strips
+
+
+class Zombie(pygame.sprite.Sprite):
+
+    # Constructor. Pass in the color of the block,
+    # and its x and y position
+    def __init__(self, color, width, height, speed):
+        # Call the parent class (Sprite) constructor
+        pygame.sprite.Sprite.__init__(self)
+
+        # Create an image of the block, and fill it with a color.
+        # This could also be an image loaded from the disk.
+        self.image = pygame.Surface([width, height])
+        self.image.fill(color)
+
+        # Fetch the rectangle object that has the dimensions of the image
+        # Update the position of this object by setting the values of rect.x and rect.y
+        self.rect = self.image.get_rect()
+
+        info = pygame.display.Info()
+        screenWidth, screenHeight = info.current_w, info.current_h
+
+        self.rect.x = screenWidth
+        self.rect.y = screenHeight - height
+
+        self.speed = speed
+
+    def update(self):
+        self.rect.x -= self.speed
