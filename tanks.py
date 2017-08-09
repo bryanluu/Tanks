@@ -2,6 +2,13 @@ import geometry as geo
 import pygame
 import utilities
 import math
+import random
+from enum import Enum
+
+
+class Weapon(Enum):
+    CANNON = 0
+    BOMB = 1
 
 
 class Tank(pygame.sprite.Sprite):
@@ -26,6 +33,7 @@ class Tank(pygame.sprite.Sprite):
         self.power = 0.5
         self.power_dir = 1
         self.power_speed = 0.03
+        self.weapon = Weapon.CANNON
 
         self.cannon_sound = utilities.load_sound("cannon.wav")
 
@@ -66,45 +74,104 @@ class Tank(pygame.sprite.Sprite):
     def shoot(self):
         pos = self.origin()
 
-        ball_speed = 30
+        if self.weapon == Weapon.CANNON:
+            ball_speed = 30
 
-        ball = Cannonball(pos, geo.Vector2D(self.power * ball_speed * math.cos(math.radians(self.angle)), -self.power * ball_speed * math.sin(math.radians(self.angle))))
+            ball = Cannonball(pos, geo.Vector2D(self.power * ball_speed * math.cos(math.radians(self.angle)), -self.power * ball_speed * math.sin(math.radians(self.angle))))
 
-        ball.initGraphics()
+        elif self.weapon == Weapon.BOMB:
+            ball_speed = 30
 
-        ball.sound = utilities.load_sound('explosion.wav')
+            ball = Bomb(pos, geo.Vector2D(self.power * ball_speed * math.cos(math.radians(self.angle)), -self.power * ball_speed * math.sin(math.radians(self.angle))))
+
+            self.weapon = Weapon.CANNON
 
         pygame.mixer.Sound.play(self.cannon_sound)
 
         return ball
 
-class Cannonball(pygame.sprite.Sprite):
+
+class Projectile(pygame.sprite.Sprite):
 
     def __init__(self, pos, velocity):
         # Call the parent class (Sprite) constructor
         pygame.sprite.Sprite.__init__(self)
 
-        self.initialPos = pos
         self.v = velocity
+        self.initGraphics(pos)
 
-    def initGraphics(self):
-        self.img = utilities.load_image('ball.png')
-        self.img = pygame.transform.scale(self.img, (5, 5))
-        self.img.set_colorkey((255, 255, 255))
+    def initGraphics(self, pos):
+        self.img = pygame.Surface((5, 5))
         self.rect = self.img.get_rect()
-        self.rect.x, self.rect.y = self.initialPos
+        self.rect.center = pos
 
     def draw(self, screen):
         screen.blit(self.img, self.rect)
 
     def pos(self):
-        return self.rect.x, self.rect.y
+        return self.rect.center
 
     def explode(self):
+        return None
+
+    @staticmethod
+    def collided(left, right):
+        x, y, w, h = left.rect
+        x2, y2, w2, h2 = right.rect
+
+        radius = 15
+
+        if x + radius > x2 and x - radius < x2 + w2 and y + radius > y2 and y - radius < y2 + h2:
+            return True
+        else:
+            return False
+
+
+class Cannonball(Projectile):
+
+    def initGraphics(self, pos):
+        self.img = utilities.load_image('ball.png')
+        self.img = pygame.transform.scale(self.img, (5, 5))
+        self.img.set_colorkey((255, 255, 255))
+        self.rect = self.img.get_rect()
+        self.rect.center = pos
+        self.sound = utilities.load_sound('explosion.wav')
+
+    def explode(self):
+        pygame.mixer.Sound.play(self.sound)
+
         strips = utilities.SpriteStripAnim('explosion.png', (0, 0, 256, 256), (8,7), colorkey=-1, frames=1)
         strips.iter()
 
         return strips
+
+
+class Bomb(Projectile):
+    def initGraphics(self, pos):
+        self.strips = utilities.SpriteStripAnim('bomb.png', (0, 0, 60, 60), (12, 1), colorkey=-1, frames=5)
+        self.strips.iter()
+        self.img = self.strips.next()
+        self.img = pygame.transform.scale(self.img, (5, 5))
+        self.rect = self.img.get_rect()
+        self.rect.center = pos
+        self.sound = utilities.load_sound('bomb.wav')
+
+    def explode(self):
+        pygame.mixer.Sound.play(self.sound)
+
+        return self.strips
+
+    @staticmethod
+    def collided(left, right):
+        x, y, w, h = left.rect
+        x2, y2, w2, h2 = right.rect
+
+        radius = 30
+
+        if x + radius > x2 and x - radius < x2 + w2 and y + radius > y2 and y - radius < y2 + h2:
+            return True
+        else:
+            return False
 
 
 class Zombie(pygame.sprite.Sprite):
@@ -131,6 +198,40 @@ class Zombie(pygame.sprite.Sprite):
         self.rect.y = screenHeight - height
 
         self.speed = speed
+        self.x = float(self.rect.x)
 
     def update(self):
-        self.rect.x -= self.speed
+        self.x -= self.speed
+        self.rect.x = int(self.x)
+
+
+class Balloon(pygame.sprite.Sprite):
+
+    def __init__(self, pos, color):
+        # Call the parent class (Sprite) constructor
+        pygame.sprite.Sprite.__init__(self)
+        self.pop_sound = utilities.load_sound('balloon_pop.wav')
+
+        # Create an image of the block, and fill it with a color.
+        # This could also be an image loaded from the disk.
+        self.image = pygame.Surface((10, 20))
+        self.image.fill(color)
+        self.color = color
+
+        # Fetch the rectangle object that has the dimensions of the image
+        # Update the position of this object by setting the values of rect.x and rect.y
+        self.rect = self.image.get_rect()
+        self.rect.center = pos
+        self.y = self.rect.y
+
+    def update(self):
+        # move upwards
+        self.y += random.normalvariate(-1, 0.5)
+        self.rect.y = int(self.y)
+
+        if self.rect.y < -self.rect.h:
+            self.kill()
+
+
+    def pop(self):
+        pygame.mixer.Sound.play(self.pop_sound)

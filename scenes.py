@@ -1,8 +1,8 @@
 import pygame
 import utilities
 import geometry as geo
-from tanks import Tank, Zombie
-import math
+from tanks import Tank, Zombie, Balloon, Weapon
+import math, random
 import time
 
 class SceneBase:
@@ -98,7 +98,8 @@ class BallScene(SceneBase):
 
 
 class Tanks(SceneBase):
-    ZOMBIE_RESPAWN_TIME = 1
+    BALLOON_SPAWN_TIME = 10
+    ZOMBIE_RESPAWN_TIME = 2
     MAX_ZOMBIES = 5
 
     def __init__(self):
@@ -106,34 +107,35 @@ class Tanks(SceneBase):
         self.gravity = geo.Vector2D(0, 1)
         self.elasticity = 0.8
         self.friction = 0.1
-        self.tanks = pygame.sprite.Group()
-        self.tanks.add(Tank((0, 0), (255, 0, 0)))
-        self.balls = pygame.sprite.Group()
+        self.tank = (Tank((0, 0), (255, 0, 0)))
+        self.projectiles = pygame.sprite.Group()
         self.explosions = []
         self.zombies = pygame.sprite.Group()
         self.score = 0
         self.baddie_queue = []
+        self.balloons = pygame.sprite.Group()
+        self.startTime = time.time()
+        self.lastBalloonSpawnTime = self.startTime
 
     def initGraphics(self, screen):
         self.screen = screen
 
-        # add first zombie
-        zombie = Zombie((0, 255, 0), 10, 30, 1)
+        # add first zombie, for some reason this needs to be here
+        zombie = Zombie((0, 255, 0), 10, 30, 0.3)
         self.zombies.add(zombie)
         self.timeOfLastAdd = time.time()
 
         self.scoreText = pygame.font.Font('freesansbold.ttf', 30)
 
-
     def ProcessInput(self, events, pressed_keys):
         for event in events:
             if event.type == pygame.MOUSEBUTTONUP:
-                p1 = self.tanks.sprites()[0]
+                p1 = self.tank
                 
-                ball = p1.shoot()
-                self.balls.add(ball)
+                p = p1.shoot()
+                self.projectiles.add(p)
             elif event.type == pygame.MOUSEBUTTONDOWN:
-                p1 = self.tanks.sprites()[0]
+                p1 = self.tank
 
                 p1.power = 0.5
 
@@ -145,7 +147,7 @@ class Tanks(SceneBase):
         screenWidth, screenHeight = info.current_w, info.current_h
 
         if pressed[0]:
-            p1 = self.tanks.sprites()[0]
+            p1 = self.tank
             p1.power += p1.power_dir * p1.power_speed
             if p1.power >= 1:
                 p1.power_dir *= -1
@@ -154,54 +156,40 @@ class Tanks(SceneBase):
                 p1.power_dir *= -1
                 p1.power = 0.5
 
-        for tank in self.tanks:
-            tank.v += self.gravity
-            tank.rect.move_ip(*tank.v)
+        self.tank.v += self.gravity
+        self.tank.rect.move_ip(*self.tank.v)
 
-            if tank.rect.y > screenHeight - tank.rect.height:
-                tank.rect.y = screenHeight - tank.rect.height
+        if self.tank.rect.y > screenHeight - self.tank.rect.height:
+            self.tank.rect.y = screenHeight - self.tank.rect.height
 
-            if tank.rect.x < 0:
-                tank.rect.x = 0
-            elif tank.rect.x > screenWidth - tank.rect.width:
-                tank.rect.x = screenWidth - tank.rect.width
+        if self.tank.rect.x < 0:
+            self.tank.rect.x = 0
+        elif self.tank.rect.x > screenWidth - self.tank.rect.width:
+            self.tank.rect.x = screenWidth - self.tank.rect.width
 
-            origin = tank.origin()
-            dr = geo.Vector2D(*mouse) - geo.Vector2D(*origin)
+        origin = self.tank.origin()
+        dr = geo.Vector2D(*mouse) - geo.Vector2D(*origin)
 
-            tank.angle = (math.degrees(geo.Vector2D.angle_between(dr, geo.Vector2D(1, 0))))
+        self.tank.angle = (math.degrees(geo.Vector2D.angle_between(dr, geo.Vector2D(1, 0))))
 
-            collided = pygame.sprite.spritecollide(tank, self.zombies, False)
+        collided_objects = pygame.sprite.spritecollide(self.tank, self.zombies, False)
 
-            for zombie in collided:
-                self.Terminate()
+        for zombie in collided_objects:
+            self.Terminate()
 
-        for i, ball in enumerate(self.balls):
-            ball.v += self.gravity
-            ball.rect.move_ip(*ball.v)
+        for i, p in enumerate(self.projectiles):
+            p.v += self.gravity
+            p.rect.move_ip(*p.v)
             
-            if ball.rect.y > screenHeight - ball.rect.height or ball.rect.x < 0 or ball.rect.x > screenWidth - ball.rect.width:
-                pygame.mixer.Sound.play(ball.sound)
-                self.explosions.append((ball.explode(), ball.pos()))
-                ball.kill()
+            if p.rect.y > screenHeight - p.rect.height or p.rect.x < 0 or p.rect.x > screenWidth - p.rect.width:
+                self.explosions.append((p.explode(), p.pos()))
+                p.kill()
 
-            def collided(left, right):
-                x,y,w,h = left.rect
-                x2,y2,w2,h2 = right.rect
+            collided_objects = pygame.sprite.spritecollide(p, self.zombies, True, p.collided)
 
-                radius = 15
-
-                if x+radius > x2 and x-radius < x2+w2 and y+radius > y2 and y-radius < y2+h2:
-                    return True
-                else:
-                    return False
-
-            collided = pygame.sprite.spritecollide(ball, self.zombies, True, collided)
-
-            for zombie in collided:
-                pygame.mixer.Sound.play(ball.sound)
-                self.explosions.append((ball.explode(), ball.pos()))
-                ball.kill()
+            for zombie in collided_objects:
+                self.explosions.append((p.explode(), p.pos()))
+                p.kill()
 
                 # add next zombie
                 zombie2 = Zombie((0, 255, 0), 10, 30, zombie.speed*1.1)
@@ -209,7 +197,20 @@ class Tanks(SceneBase):
                 self.baddie_queue.append(zombie2)
                 self.baddie_queue.append(zombie3)
 
-                self.score += 1
+                self.incrementScore(1)
+
+            collided_objects = pygame.sprite.spritecollide(p, self.balloons, True, p.collided)
+
+            for balloon in collided_objects:
+                self.explosions.append((p.explode(), p.pos()))
+                p.kill()
+
+                balloon.pop()
+
+                self.tank.weapon = Weapon.BOMB
+
+                self.incrementScore(5)
+
 
         if time.time() - self.timeOfLastAdd > self.ZOMBIE_RESPAWN_TIME:
             if len(self.baddie_queue) > 0 and len(self.zombies) < self.MAX_ZOMBIES:
@@ -217,7 +218,20 @@ class Tanks(SceneBase):
                 self.zombies.add(zombie)
                 self.timeOfLastAdd = time.time()
 
+        if time.time() - self.lastBalloonSpawnTime > self.BALLOON_SPAWN_TIME:
+            pos = random.uniform(100, screenWidth - 100), random.uniform(100, screenHeight - 50)
+            balloon = Balloon(pos, (0, 100, 0))
+
+            self.balloons.add(balloon)
+            self.lastBalloonSpawnTime = time.time()
+
         self.zombies.update()
+        self.balloons.update()
+
+
+    def incrementScore(self, inc):
+        self.score += inc
+
 
 
     def Render(self):
@@ -239,13 +253,13 @@ class Tanks(SceneBase):
             else:
                 self.explosions.pop(i)
 
-        for ball in self.balls:
-            ball.draw(self.screen)
+        for p in self.projectiles:
+            p.draw(self.screen)
 
-        for tank in self.tanks:
-            tank.draw(self.screen)
+        self.tank.draw(self.screen)
 
         self.zombies.draw(self.screen)
+        self.balloons.draw(self.screen)
 
         pygame.display.flip()
 
