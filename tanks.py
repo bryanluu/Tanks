@@ -4,6 +4,7 @@ import utilities
 import math
 import random
 from enum import Enum
+import time
 
 
 class Weapon(Enum):
@@ -147,6 +148,7 @@ class Cannonball(Projectile):
 
 
 class Bomb(Projectile):
+    BOMB_FUSE_TIME = 5
     def initGraphics(self, pos):
         self.strips = utilities.SpriteStripAnim('bomb.png', (0, 0, 60, 60), (12, 1), colorkey=-1, frames=5)
         self.strips.iter()
@@ -155,6 +157,7 @@ class Bomb(Projectile):
         self.rect = self.img.get_rect()
         self.rect.center = pos
         self.sound = utilities.load_sound('bomb.wav')
+        self.start = time.time()
 
     def explode(self):
         pygame.mixer.Sound.play(self.sound)
@@ -168,7 +171,7 @@ class Bomb(Projectile):
 
         radius = 30
 
-        if x + radius > x2 and x - radius < x2 + w2 and y + radius > y2 and y - radius < y2 + h2:
+        if time.time() - left.start > Bomb.BOMB_FUSE_TIME and x + radius > x2 and x - radius < x2 + w2 and y + radius > y2 and y - radius < y2 + h2:
             return True
         else:
             return False

@@ -1,7 +1,7 @@
 import pygame
 import utilities
 import geometry as geo
-from tanks import Tank, Zombie, Balloon, Weapon
+from tanks import Tank, Zombie, Balloon, Weapon, Bomb
 import math, random
 import time
 
@@ -182,8 +182,25 @@ class Tanks(SceneBase):
             p.rect.move_ip(*p.v)
             
             if p.rect.y > screenHeight - p.rect.height or p.rect.x < 0 or p.rect.x > screenWidth - p.rect.width:
-                self.explosions.append((p.explode(), p.pos()))
-                p.kill()
+                if type(p) is not Bomb:
+                    self.explosions.append((p.explode(), p.pos()))
+                    p.kill()
+                else:
+                    if p.rect.y > screenHeight - p.rect.height:
+                        p.rect.y = screenHeight - p.rect.height
+                        p.v *= 0.9
+                    if p.rect.x > screenWidth - p.rect.width:
+                        p.rect.x = screenWidth - p.rect.width
+                        p.v.x *= -1
+                        p.v *= 0.5
+                    elif p.rect.x < 0:
+                        p.rect.x = 0
+                        p.v.x *= -1
+                        p.v *= 0.5
+
+                    if time.time() - p.start > Bomb.BOMB_FUSE_TIME:
+                        self.explosions.append((p.explode(), p.pos()))
+                        p.kill()
 
             collided_objects = pygame.sprite.spritecollide(p, self.zombies, True, p.collided)
 
