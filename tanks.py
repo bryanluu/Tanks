@@ -5,6 +5,7 @@ import math
 import random
 from enum import Enum
 import time
+import colors
 
 
 class Weapon(Enum):
@@ -106,6 +107,13 @@ class Tank(pygame.sprite.Sprite):
                 ball_speed = 50
 
                 ball = Bullet(pos, geo.Vector2D(self.power * ball_speed * math.cos(math.radians(self.angle)), -self.power * ball_speed * math.sin(math.radians(self.angle))))
+
+                pygame.mixer.Sound.play(ball.sound)
+            else:
+                info = pygame.display.Info()
+                screenWidth, screenHeight = info.current_w, info.current_h
+
+                ball = Laser(pos, geo.Vector2D(2*screenWidth*math.cos(math.radians(self.angle)), -2*screenHeight*math.sin(math.radians(self.angle))))
 
                 pygame.mixer.Sound.play(ball.sound)
 
@@ -224,6 +232,27 @@ class Bullet(Projectile):
         radius = 3
 
         if x + radius > x2 and x - radius < x2 + w2 and y + radius > y2 and y - radius < y2 + h2:
+            return True
+        else:
+            return False
+
+
+class Laser(Projectile):
+    LASER_TIME = 0.2
+    def initGraphics(self, pos):
+        self.rect = pygame.Rect(*pos, 1, 1)
+        self.sound = utilities.load_sound('laser.wav')
+
+    def draw(self, screen):
+        pygame.draw.line(screen, colors.RED, self.rect.topleft, (geo.Vector2D(*self.pos()) + self.v).tuple())
+
+    @staticmethod
+    def collided(left, right):
+
+        topline = geo.Vector2D(*right.rect.topleft) - geo.Vector2D(*left.pos())
+        bottomline = geo.Vector2D(*right.rect.bottomleft) - geo.Vector2D(*left.pos())
+
+        if geo.Vector2D.angle_between(left.v, topline) < 0 < geo.Vector2D.angle_between(left.v, bottomline):
             return True
         else:
             return False

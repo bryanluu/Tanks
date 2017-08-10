@@ -1,7 +1,7 @@
 import pygame
 import utilities
 import geometry as geo
-from tanks import Tank, Zombie, Balloon, Weapon, Bomb
+from tanks import Tank, Zombie, Balloon, Weapon, Bomb, Laser
 import math, random
 import time
 import colors
@@ -130,13 +130,13 @@ class Tanks(SceneBase):
 
     def ProcessInput(self, events, pressed_keys):
         for event in events:
-            if event.type == pygame.MOUSEBUTTONUP:
+            if event.type == pygame.MOUSEBUTTONUP and event.button == 1:
                 p1 = self.tank
 
-                if p1.weapon != Weapon.MACHINE_GUN or p1.weapon != Weapon.LASER:
+                if p1.weapon != Weapon.MACHINE_GUN:
                     p = p1.shoot()
                     self.projectiles.add(p)
-            elif event.type == pygame.MOUSEBUTTONDOWN:
+            elif event.type == pygame.MOUSEBUTTONDOWN and event.button == 1:
                 p1 = self.tank
 
                 p1.power = 0.5
@@ -159,7 +159,7 @@ class Tanks(SceneBase):
                 elif p1.power <= 0.5:
                     p1.power_dir *= -1
                     p1.power = 0.5
-            else:
+            elif p1.weapon == Weapon.MACHINE_GUN:
                 if time.time() - p1.lastShootTime > p1.MACHINE_GUN_RELOAD_TIME:
 
                     bullet = p1.shoot()
@@ -188,8 +188,13 @@ class Tanks(SceneBase):
             self.Terminate()
 
         for i, p in enumerate(self.projectiles):
-            p.v += self.gravity
-            p.rect.move_ip(*p.v)
+
+            if type(p) is not Laser:
+                p.v += self.gravity
+                p.rect.move_ip(*p.v)
+            else:
+                if time.time() - self.tank.lastShootTime >= Laser.LASER_TIME:
+                    p.kill()
             
             if p.rect.y > screenHeight - p.rect.height or p.rect.x < 0 or p.rect.x > screenWidth - p.rect.width:
                 if type(p) is not Bomb:
@@ -242,6 +247,7 @@ class Tanks(SceneBase):
                     self.tank.ammo = 10
                 elif balloon.color == colors.DARK_RED:
                     self.tank.weapon = Weapon.LASER
+                    self.tank.ammo = 1
 
                 self.incrementScore(5)
 
@@ -257,10 +263,10 @@ class Tanks(SceneBase):
 
             if self.score < 30:
                 color_list = [colors.DARK_GREEN]
-            else:
+            elif self.score < 100:
                 color_list = [colors.DARK_BLUE, colors.DARK_GREEN]
-            # else:
-            #     color_list = [colors.DARK_RED, colors.DARK_GREEN, colors.DARK_BLUE]
+            else:
+                color_list = [colors.DARK_RED, colors.DARK_GREEN, colors.DARK_BLUE]
 
             color = random.choice(color_list)
             balloon = Balloon(pos, color)
