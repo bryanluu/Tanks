@@ -122,6 +122,7 @@ class Tanks(SceneBase):
         self.timeOfLastAdd['bats'] = time.time()
         self.timeOfLastAdd['zombies'] = time.time()
         self.bat_speed = 0.5
+        self.bomb = None
 
     def initGraphics(self, screen):
         self.screen = screen
@@ -139,10 +140,21 @@ class Tanks(SceneBase):
                 p1 = self.tank
 
                 if p1.weapon != Weapon.MACHINE_GUN:
-                    p = p1.shoot()
-                    self.projectiles.add(p)
+                    if not self.bomb:
+                        if p1.weapon == Weapon.BOMB:
+                            p = self.bomb = p1.shoot()
+                        else:
+                            p = p1.shoot()
+                        self.projectiles.add(p)
+                    else:
+                        self.bomb = None
             elif event.type == pygame.MOUSEBUTTONDOWN and event.button == 1:
                 p1 = self.tank
+
+                if self.bomb:
+                    bomb = self.bomb
+                    bomb.kill_on_explode = True
+                    self.killBaddies(bomb)
 
                 p1.power = 0.5
 
@@ -222,23 +234,7 @@ class Tanks(SceneBase):
                         self.explosions.append((p.explode(), p.pos()))
                         p.kill()
 
-            collided_objects = pygame.sprite.spritecollide(p, self.baddies, True, p.collided)
-
-            for baddy in collided_objects:
-
-                self.explosions.append((p.explode(), p.pos()))
-                p.kill()
-
-                if type(baddy) is Zombie:
-                    # add next zombie
-                    zombie2 = Zombie((0, 255, 0), 10, 30, baddy.speed*1.1)
-                    zombie3 = Zombie((0, 255, 0), 10, 30, baddy.speed*1.1)
-                    self.baddie_queue.append(zombie2)
-                    self.baddie_queue.append(zombie3)
-
-                    self.incrementScore(1)
-                else:
-                    self.incrementScore(5)
+            self.killBaddies(p)
 
             collided_objects = pygame.sprite.spritecollide(p, self.balloons, True, p.collided)
 
@@ -259,7 +255,6 @@ class Tanks(SceneBase):
                     self.tank.ammo = 1
 
                 self.incrementScore(5)
-
 
         if time.time() - self.timeOfLastAdd['zombies'] > self.ZOMBIE_RESPAWN_TIME:
             if len(self.baddie_queue) > 0 and len(self.baddies) < self.MAX_ZOMBIES:
@@ -295,6 +290,23 @@ class Tanks(SceneBase):
         self.baddies.update()
         self.balloons.update()
 
+    def killBaddies(self, projectile):
+        collided_objects = pygame.sprite.spritecollide(projectile, self.baddies, True, projectile.collided)
+        for baddy in collided_objects:
+
+            self.explosions.append((projectile.explode(), projectile.pos()))
+            projectile.kill()
+
+            if type(baddy) is Zombie:
+                # add next zombie
+                zombie2 = Zombie((0, 255, 0), 10, 30, baddy.speed * 1.1)
+                zombie3 = Zombie((0, 255, 0), 10, 30, baddy.speed * 1.1)
+                self.baddie_queue.append(zombie2)
+                self.baddie_queue.append(zombie3)
+
+                self.incrementScore(1)
+            else:
+                self.incrementScore(5)
 
     def incrementScore(self, inc):
         self.score += inc

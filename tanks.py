@@ -103,6 +103,7 @@ class Tank(pygame.sprite.Sprite):
                 ball = Bomb(pos, geo.Vector2D(self.power * ball_speed * math.cos(math.radians(self.angle)), -self.power * ball_speed * math.sin(math.radians(self.angle))))
 
                 pygame.mixer.Sound.play(self.cannon_sound)
+
             elif self.weapon == Weapon.MACHINE_GUN:
                 ball_speed = 50
 
@@ -204,6 +205,7 @@ class Bomb(Projectile):
         self.rect.center = pos
         self.sound = utilities.load_sound('bomb.wav')
         self.start = time.time()
+        self.kill_on_explode = False
 
     def explode(self):
         pygame.mixer.Sound.play(self.sound)
@@ -217,8 +219,9 @@ class Bomb(Projectile):
 
         radius = 30
 
-        if time.time() - left.start > Bomb.BOMB_FUSE_TIME and x + radius > x2 and x - radius < x2 + w2 and y + radius > y2 and y - radius < y2 + h2:
-            return True
+        if x + radius > x2 and x - radius < x2 + w2 and y + radius > y2 and y - radius < y2 + h2:
+            if left.kill_on_explode or time.time() - left.start > Bomb.BOMB_FUSE_TIME:
+                return True
         else:
             return False
 
