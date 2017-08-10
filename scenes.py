@@ -4,6 +4,7 @@ import geometry as geo
 from tanks import Tank, Zombie, Balloon, Weapon, Bomb
 import math, random
 import time
+import colors
 
 class SceneBase:
     def __init__(self):
@@ -121,7 +122,7 @@ class Tanks(SceneBase):
         self.screen = screen
 
         # add first zombie, for some reason this needs to be here
-        zombie = Zombie((0, 255, 0), 10, 30, 0.3)
+        zombie = Zombie(colors.GREEN, 10, 30, 0.3)
         self.zombies.add(zombie)
         self.timeOfLastAdd = time.time()
 
@@ -131,9 +132,10 @@ class Tanks(SceneBase):
         for event in events:
             if event.type == pygame.MOUSEBUTTONUP:
                 p1 = self.tank
-                
-                p = p1.shoot()
-                self.projectiles.add(p)
+
+                if p1.weapon != Weapon.MACHINE_GUN or p1.weapon != Weapon.LASER:
+                    p = p1.shoot()
+                    self.projectiles.add(p)
             elif event.type == pygame.MOUSEBUTTONDOWN:
                 p1 = self.tank
 
@@ -148,13 +150,21 @@ class Tanks(SceneBase):
 
         if pressed[0]:
             p1 = self.tank
-            p1.power += p1.power_dir * p1.power_speed
-            if p1.power >= 1:
-                p1.power_dir *= -1
-                p1.power = 1
-            elif p1.power <= 0.5:
-                p1.power_dir *= -1
-                p1.power = 0.5
+
+            if p1.weapon.value < Weapon.MACHINE_GUN.value:
+                p1.power += p1.power_dir * p1.power_speed
+                if p1.power >= 1:
+                    p1.power_dir *= -1
+                    p1.power = 1
+                elif p1.power <= 0.5:
+                    p1.power_dir *= -1
+                    p1.power = 0.5
+            else:
+                if time.time() - p1.lastShootTime > p1.MACHINE_GUN_RELOAD_TIME:
+
+                    bullet = p1.shoot()
+
+                    self.projectiles.add(bullet)
 
         self.tank.v += self.gravity
         self.tank.rect.move_ip(*self.tank.v)
@@ -224,7 +234,14 @@ class Tanks(SceneBase):
 
                 balloon.pop()
 
-                self.tank.weapon = Weapon.BOMB
+                if balloon.color == colors.DARK_GREEN:
+                    self.tank.weapon = Weapon.BOMB
+                    self.tank.ammo = 2
+                elif balloon.color == colors.DARK_BLUE:
+                    self.tank.weapon = Weapon.MACHINE_GUN
+                    self.tank.ammo = 10
+                elif balloon.color == colors.DARK_RED:
+                    self.tank.weapon = Weapon.LASER
 
                 self.incrementScore(5)
 
@@ -237,7 +254,16 @@ class Tanks(SceneBase):
 
         if time.time() - self.lastBalloonSpawnTime > self.BALLOON_SPAWN_TIME:
             pos = random.uniform(100, screenWidth - 100), random.uniform(100, screenHeight - 50)
-            balloon = Balloon(pos, (0, 100, 0))
+
+            if self.score < 30:
+                color_list = [colors.DARK_GREEN]
+            else:
+                color_list = [colors.DARK_BLUE, colors.DARK_GREEN]
+            # else:
+            #     color_list = [colors.DARK_RED, colors.DARK_GREEN, colors.DARK_BLUE]
+
+            color = random.choice(color_list)
+            balloon = Balloon(pos, color)
 
             self.balloons.add(balloon)
             self.lastBalloonSpawnTime = time.time()
@@ -261,12 +287,15 @@ class Tanks(SceneBase):
 
         for i, tup in enumerate(self.explosions):
             exp, pos = tup
-            if exp.i < len(exp.images):
-                img = exp.next()
-                img = pygame.transform.scale(img, (50, 50))
-                x, y, w, h = img.get_rect()
-                pos = pos[0] - int(w/2), pos[1] - int(h/2)
-                self.screen.blit(img, pos)
+            if exp:
+                if exp.i < len(exp.images):
+                    img = exp.next()
+                    img = pygame.transform.scale(img, (50, 50))
+                    x, y, w, h = img.get_rect()
+                    pos = pos[0] - int(w/2), pos[1] - int(h/2)
+                    self.screen.blit(img, pos)
+                else:
+                    self.explosions.pop(i)
             else:
                 self.explosions.pop(i)
 

@@ -10,9 +10,13 @@ import time
 class Weapon(Enum):
     CANNON = 0
     BOMB = 1
+    MACHINE_GUN = 2
+    LASER = 3
 
 
 class Tank(pygame.sprite.Sprite):
+
+    MACHINE_GUN_RELOAD_TIME = 0.5
 
     def __init__(self, pos, color, facing_right=True):
         # Call the parent class (Sprite) constructor
@@ -35,6 +39,9 @@ class Tank(pygame.sprite.Sprite):
         self.power_dir = 1
         self.power_speed = 0.03
         self.weapon = Weapon.CANNON
+        self.ammo = 0
+        self.lastShootTime = time.time()
+        self.ammoText = pygame.font.Font('freesansbold.ttf', 8)
 
         self.cannon_sound = utilities.load_sound("cannon.wav")
 
@@ -56,8 +63,15 @@ class Tank(pygame.sprite.Sprite):
 
         self.surface.blit(gun, gun_rect)
 
-        # Draw the power meter
-        pygame.draw.rect(self.surface, (0, 255, 0), (5, h - 15 - int(self.power*10), 5, int(self.power*10)))
+        if self.weapon.value < Weapon.MACHINE_GUN.value:
+            # Draw the power meter
+            pygame.draw.rect(self.surface, (0, 255, 0), (5, h - 15 - int(self.power*10), 5, int(self.power*10)))
+
+        if self.ammo > 0:
+            ammoSurf = self.ammoText.render("{0}".format(self.ammo), True, (0, 0, 0))
+            ammoRect = ammoSurf.get_rect()
+            ammoRect.x, ammoRect.y = 5, 5
+            self.surface.blit(ammoSurf, ammoRect)
 
         # Draw the tank body
         pygame.draw.circle(self.surface, self.color, (int(w/2), h - 10), 10)
@@ -80,14 +94,27 @@ class Tank(pygame.sprite.Sprite):
 
             ball = Cannonball(pos, geo.Vector2D(self.power * ball_speed * math.cos(math.radians(self.angle)), -self.power * ball_speed * math.sin(math.radians(self.angle))))
 
-        elif self.weapon == Weapon.BOMB:
-            ball_speed = 30
+            pygame.mixer.Sound.play(self.cannon_sound)
+        else:
+            if self.weapon == Weapon.BOMB:
+                ball_speed = 30
 
-            ball = Bomb(pos, geo.Vector2D(self.power * ball_speed * math.cos(math.radians(self.angle)), -self.power * ball_speed * math.sin(math.radians(self.angle))))
+                ball = Bomb(pos, geo.Vector2D(self.power * ball_speed * math.cos(math.radians(self.angle)), -self.power * ball_speed * math.sin(math.radians(self.angle))))
 
-            self.weapon = Weapon.CANNON
+                pygame.mixer.Sound.play(self.cannon_sound)
+            elif self.weapon == Weapon.MACHINE_GUN:
+                ball_speed = 50
 
-        pygame.mixer.Sound.play(self.cannon_sound)
+                ball = Bullet(pos, geo.Vector2D(self.power * ball_speed * math.cos(math.radians(self.angle)), -self.power * ball_speed * math.sin(math.radians(self.angle))))
+
+                pygame.mixer.Sound.play(ball.sound)
+
+            self.ammo -= 1
+
+            if self.ammo == 0:
+                self.weapon = Weapon.CANNON
+
+        self.lastShootTime = time.time()
 
         return ball
 
@@ -172,6 +199,31 @@ class Bomb(Projectile):
         radius = 30
 
         if time.time() - left.start > Bomb.BOMB_FUSE_TIME and x + radius > x2 and x - radius < x2 + w2 and y + radius > y2 and y - radius < y2 + h2:
+            return True
+        else:
+            return False
+
+
+class Bullet(Projectile):
+
+    def initGraphics(self, pos):
+        self.img = utilities.load_image('ball.png')
+        self.img = pygame.transform.scale(self.img, (5, 5))
+        self.rect = self.img.get_rect()
+        self.rect.center = pos
+        self.sound = utilities.load_sound('bullet.wav')
+
+    def explode(self):
+        pygame.mixer.Sound.play(self.sound)
+
+    @staticmethod
+    def collided(left, right):
+        x, y, w, h = left.rect
+        x2, y2, w2, h2 = right.rect
+
+        radius = 3
+
+        if x + radius > x2 and x - radius < x2 + w2 and y + radius > y2 and y - radius < y2 + h2:
             return True
         else:
             return False
