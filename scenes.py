@@ -1,7 +1,7 @@
 import pygame
 import utilities
 import geometry as geo
-from tanks import Tank, Zombie, Balloon, Weapon, Bomb, Laser
+from tanks import *
 import math, random
 import time
 import colors
@@ -101,6 +101,7 @@ class BallScene(SceneBase):
 class Tanks(SceneBase):
     BALLOON_SPAWN_TIME = 10
     ZOMBIE_RESPAWN_TIME = 2
+    BAT_RESPAWN_TIME = 30
     MAX_ZOMBIES = 5
 
     def __init__(self):
@@ -111,20 +112,24 @@ class Tanks(SceneBase):
         self.tank = (Tank((0, 0), (255, 0, 0)))
         self.projectiles = pygame.sprite.Group()
         self.explosions = []
-        self.zombies = pygame.sprite.Group()
+        self.baddies = pygame.sprite.Group()
         self.score = 0
         self.baddie_queue = []
         self.balloons = pygame.sprite.Group()
         self.startTime = time.time()
         self.lastBalloonSpawnTime = self.startTime
+        self.timeOfLastAdd = {}
+        self.timeOfLastAdd['bats'] = time.time()
+        self.timeOfLastAdd['zombies'] = time.time()
+        self.bat_speed = 0.5
 
     def initGraphics(self, screen):
         self.screen = screen
 
         # add first zombie, for some reason this needs to be here
         zombie = Zombie(colors.GREEN, 10, 30, 0.3)
-        self.zombies.add(zombie)
-        self.timeOfLastAdd = time.time()
+        self.baddies.add(zombie)
+        self.timeOfLastAdd['zombies'] = time.time()
 
         self.scoreText = pygame.font.Font('freesansbold.ttf', 30)
 
@@ -182,9 +187,9 @@ class Tanks(SceneBase):
 
         self.tank.angle = (math.degrees(geo.Vector2D.angle_between(dr, geo.Vector2D(1, 0))))
 
-        collided_objects = pygame.sprite.spritecollide(self.tank, self.zombies, False)
+        collided_objects = pygame.sprite.spritecollide(self.tank, self.baddies, False, self.tank.collided)
 
-        for zombie in collided_objects:
+        for baddy in collided_objects:
             self.Terminate()
 
         for i, p in enumerate(self.projectiles):
@@ -217,19 +222,23 @@ class Tanks(SceneBase):
                         self.explosions.append((p.explode(), p.pos()))
                         p.kill()
 
-            collided_objects = pygame.sprite.spritecollide(p, self.zombies, True, p.collided)
+            collided_objects = pygame.sprite.spritecollide(p, self.baddies, True, p.collided)
 
-            for zombie in collided_objects:
+            for baddy in collided_objects:
+
                 self.explosions.append((p.explode(), p.pos()))
                 p.kill()
 
-                # add next zombie
-                zombie2 = Zombie((0, 255, 0), 10, 30, zombie.speed*1.1)
-                zombie3 = Zombie((0, 255, 0), 10, 30, zombie.speed*1.1)
-                self.baddie_queue.append(zombie2)
-                self.baddie_queue.append(zombie3)
+                if type(baddy) is Zombie:
+                    # add next zombie
+                    zombie2 = Zombie((0, 255, 0), 10, 30, baddy.speed*1.1)
+                    zombie3 = Zombie((0, 255, 0), 10, 30, baddy.speed*1.1)
+                    self.baddie_queue.append(zombie2)
+                    self.baddie_queue.append(zombie3)
 
-                self.incrementScore(1)
+                    self.incrementScore(1)
+                else:
+                    self.incrementScore(5)
 
             collided_objects = pygame.sprite.spritecollide(p, self.balloons, True, p.collided)
 
@@ -252,11 +261,19 @@ class Tanks(SceneBase):
                 self.incrementScore(5)
 
 
-        if time.time() - self.timeOfLastAdd > self.ZOMBIE_RESPAWN_TIME:
-            if len(self.baddie_queue) > 0 and len(self.zombies) < self.MAX_ZOMBIES:
-                zombie = self.baddie_queue.pop(0)
-                self.zombies.add(zombie)
-                self.timeOfLastAdd = time.time()
+        if time.time() - self.timeOfLastAdd['zombies'] > self.ZOMBIE_RESPAWN_TIME:
+            if len(self.baddie_queue) > 0 and len(self.baddies) < self.MAX_ZOMBIES:
+                baddy = self.baddie_queue.pop(0)
+                self.baddies.add(baddy)
+                self.timeOfLastAdd['zombies'] = time.time()
+
+        if time.time() - self.startTime > 30:
+            if time.time() - self.timeOfLastAdd['bats'] > self.BAT_RESPAWN_TIME:
+                self.BAT_RESPAWN_TIME *= 0.9
+                self.bat_speed *= 1.1
+                bat = Bat(self.bat_speed)
+                self.baddies.add(bat)
+                self.timeOfLastAdd['bats'] = time.time()
 
         if time.time() - self.lastBalloonSpawnTime > self.BALLOON_SPAWN_TIME:
             pos = random.uniform(100, screenWidth - 100), random.uniform(100, screenHeight - 50)
@@ -274,7 +291,8 @@ class Tanks(SceneBase):
             self.balloons.add(balloon)
             self.lastBalloonSpawnTime = time.time()
 
-        self.zombies.update()
+
+        self.baddies.update()
         self.balloons.update()
 
 
@@ -310,7 +328,7 @@ class Tanks(SceneBase):
 
         self.tank.draw(self.screen)
 
-        self.zombies.draw(self.screen)
+        self.baddies.draw(self.screen)
         self.balloons.draw(self.screen)
 
         pygame.display.flip()

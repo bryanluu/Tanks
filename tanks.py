@@ -127,6 +127,17 @@ class Tank(pygame.sprite.Sprite):
         return ball
 
 
+    @staticmethod
+    def collided(left, right):
+        x, y, w, h = left.rect
+        x2, y2, w2, h2 = right.rect
+
+        if x2 < x + w:
+            return True
+        else:
+            return False
+
+
 class Projectile(pygame.sprite.Sprite):
 
     def __init__(self, pos, velocity):
@@ -258,13 +269,24 @@ class Laser(Projectile):
             return False
 
 
-class Zombie(pygame.sprite.Sprite):
+class Enemy(pygame.sprite.Sprite):
+    # Constructor. Pass in the color of the block,
+    # and its x and y position
+    def __init__(self):
+        # Call the parent class (Sprite) constructor
+        pygame.sprite.Sprite.__init__(self)
+
+    def update(self):
+        pass
+
+
+class Zombie(Enemy):
 
     # Constructor. Pass in the color of the block,
     # and its x and y position
     def __init__(self, color, width, height, speed):
         # Call the parent class (Sprite) constructor
-        pygame.sprite.Sprite.__init__(self)
+        Enemy.__init__(self)
 
         # Create an image of the block, and fill it with a color.
         # This could also be an image loaded from the disk.
@@ -287,6 +309,40 @@ class Zombie(pygame.sprite.Sprite):
     def update(self):
         self.x -= self.speed
         self.rect.x = int(self.x)
+
+
+class Bat(Enemy):
+    # Constructor. Pass in the color of the block,
+    # and its x and y position
+    def __init__(self, speed):
+        # Call the parent class (Sprite) constructor
+        Enemy.__init__(self)
+
+        # Create an image of the block, and fill it with a color.
+        # This could also be an image loaded from the disk.
+        self.strips = utilities.SpriteStripAnim('bat.png', (0, 128 - 32, 32, 32), (4, 1), colorkey=-1, frames=3, loop=True)
+        self.strips.iter()
+        self.image = self.strips.next()
+
+
+        info = pygame.display.Info()
+        screenWidth, screenHeight = info.current_w, info.current_h
+
+        # Fetch the rectangle object that has the dimensions of the image
+        # Update the position of this object by setting the values of rect.x and rect.y
+        self.rect = pygame.Rect(screenWidth, screenHeight-100, 32, 32)
+
+        self.speed = speed
+        self.x = float(self.rect.x)
+        self.y = float(self.rect.y)
+
+    def update(self):
+        self.x -= self.speed
+        self.y += random.normalvariate(0, 1)
+        self.rect.x = int(self.x)
+        self.rect.y = int(self.y)
+        self.image = self.strips.next()
+
 
 
 class Balloon(pygame.sprite.Sprite):
