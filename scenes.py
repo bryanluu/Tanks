@@ -102,6 +102,7 @@ class Tanks(SceneBase):
     BALLOON_SPAWN_TIME = 10
     ZOMBIE_RESPAWN_TIME = 2
     BAT_RESPAWN_TIME = 30
+    RUNNER_RESPAWN_TIME = 45
     MAX_ZOMBIES = 5
 
     def __init__(self):
@@ -121,14 +122,18 @@ class Tanks(SceneBase):
         self.timeOfLastAdd = {}
         self.timeOfLastAdd['bats'] = time.time()
         self.timeOfLastAdd['zombies'] = time.time()
-        self.bat_speed = 0.5
+        self.timeOfLastAdd['runners'] = time.time()
+        self.speeds = {}
+        self.speeds['zombies'] = 0.3
+        self.speeds['bats'] = 0.5
+        self.speeds['runners'] = 2
         self.bomb = None
 
     def initGraphics(self, screen):
         self.screen = screen
 
         # add first zombie, for some reason this needs to be here
-        zombie = Zombie(colors.GREEN, 10, 30, 0.3)
+        zombie = Zombie(self.speeds['zombies'])
         self.baddies.add(zombie)
         self.timeOfLastAdd['zombies'] = time.time()
 
@@ -265,10 +270,18 @@ class Tanks(SceneBase):
         if time.time() - self.startTime > 30:
             if time.time() - self.timeOfLastAdd['bats'] > self.BAT_RESPAWN_TIME:
                 self.BAT_RESPAWN_TIME *= 0.9
-                self.bat_speed *= 1.1
-                bat = Bat(self.bat_speed)
+                self.speeds['bats'] *= 1.1
+                bat = Bat(self.speeds['bats'])
                 self.baddies.add(bat)
                 self.timeOfLastAdd['bats'] = time.time()
+
+        if time.time() - self.startTime > 60:
+            if time.time() - self.timeOfLastAdd['runners'] > self.RUNNER_RESPAWN_TIME:
+                self.RUNNER_RESPAWN_TIME *= 0.9
+                self.speeds['runners'] *= 1.2
+                runner = Runner(self.speeds['runners'])
+                self.baddies.add(runner)
+                self.timeOfLastAdd['runners'] = time.time()
 
         if time.time() - self.lastBalloonSpawnTime > self.BALLOON_SPAWN_TIME:
             pos = random.uniform(100, screenWidth - 100), random.uniform(100, screenHeight - 50)
@@ -299,19 +312,20 @@ class Tanks(SceneBase):
 
             if type(baddy) is Zombie:
                 # add next zombie
-                zombie2 = Zombie((0, 255, 0), 10, 30, baddy.speed * 1.1)
-                zombie3 = Zombie((0, 255, 0), 10, 30, baddy.speed * 1.1)
+                self.speeds['zombies'] *= 1.05
+                zombie1 = Zombie(self.speeds['zombies'])
+                zombie2 = Zombie(self.speeds['zombies'])
+                self.baddie_queue.append(zombie1)
                 self.baddie_queue.append(zombie2)
-                self.baddie_queue.append(zombie3)
 
                 self.incrementScore(1)
-            else:
+            elif type(baddy) is Bat:
                 self.incrementScore(5)
+            elif type(baddy) is Runner:
+                self.incrementScore(10)
 
     def incrementScore(self, inc):
         self.score += inc
-
-
 
     def Render(self):
         self.screen.fill((255, 255, 255))

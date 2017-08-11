@@ -287,9 +287,12 @@ class Zombie(Enemy):
 
     # Constructor. Pass in the color of the block,
     # and its x and y position
-    def __init__(self, color, width, height, speed):
+    def __init__(self, speed):
         # Call the parent class (Sprite) constructor
         Enemy.__init__(self)
+
+        width, height = 10, 30
+        color = colors.GREEN
 
         # Create an image of the block, and fill it with a color.
         # This could also be an image loaded from the disk.
@@ -346,6 +349,39 @@ class Bat(Enemy):
         self.rect.y = int(self.y)
         self.image = self.strips.next()
 
+
+class Runner(Enemy):
+
+    # Constructor. Pass in the color of the block,
+    # and its x and y position
+    def __init__(self, speed):
+        # Call the parent class (Sprite) constructor
+        Enemy.__init__(self)
+
+        width, height = 10, 30
+        color = colors.GRAY
+
+        # Create an image of the block, and fill it with a color.
+        # This could also be an image loaded from the disk.
+        self.image = pygame.Surface([width, height])
+        self.image.fill(color)
+
+        # Fetch the rectangle object that has the dimensions of the image
+        # Update the position of this object by setting the values of rect.x and rect.y
+        self.rect = self.image.get_rect()
+
+        info = pygame.display.Info()
+        screenWidth, screenHeight = info.current_w, info.current_h
+
+        self.rect.x = screenWidth
+        self.rect.y = screenHeight - height
+
+        self.speed = speed
+        self.x = float(self.rect.x)
+
+    def update(self):
+        self.x -= self.speed
+        self.rect.x = int(self.x)
 
 
 class Balloon(pygame.sprite.Sprite):
