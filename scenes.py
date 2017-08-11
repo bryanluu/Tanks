@@ -269,7 +269,7 @@ class Tanks(SceneBase):
 
         if time.time() - self.startTime > 30:
             if time.time() - self.timeOfLastAdd['bats'] > self.BAT_RESPAWN_TIME:
-                self.BAT_RESPAWN_TIME *= 0.9
+                self.BAT_RESPAWN_TIME *= 0.95
                 self.speeds['bats'] *= 1.1
                 bat = Bat(self.speeds['bats'])
                 self.baddies.add(bat)
@@ -284,7 +284,7 @@ class Tanks(SceneBase):
                 self.timeOfLastAdd['runners'] = time.time()
 
         if time.time() - self.lastBalloonSpawnTime > self.BALLOON_SPAWN_TIME:
-            pos = random.uniform(100, screenWidth - 100), random.uniform(100, screenHeight - 50)
+            pos = random.uniform(100, screenWidth - 100), random.uniform(screenHeight-100, screenHeight - 50)
 
             if self.score < 30:
                 color_list = [colors.DARK_GREEN]
@@ -312,7 +312,7 @@ class Tanks(SceneBase):
 
             if type(baddy) is Zombie:
                 # add next zombie
-                self.speeds['zombies'] *= 1.05
+                self.speeds['zombies'] *= 1.01
                 zombie1 = Zombie(self.speeds['zombies'])
                 zombie2 = Zombie(self.speeds['zombies'])
                 self.baddie_queue.append(zombie1)
@@ -328,7 +328,7 @@ class Tanks(SceneBase):
         self.score += inc
 
     def Render(self):
-        self.screen.fill((255, 255, 255))
+        self.screen.fill(colors.WHITE)
 
         scoreSurf = self.scoreText.render("Score: {0}".format(self.score), True, (0, 0, 0))
         scoreRect = scoreSurf.get_rect()
