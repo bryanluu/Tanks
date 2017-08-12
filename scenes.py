@@ -357,5 +357,25 @@ class Tanks(SceneBase):
         self.baddies.draw(self.screen)
         self.balloons.draw(self.screen)
 
+        self.drawCrossHairs()
+
+
         pygame.display.flip()
+
+    def drawCrossHairs(self):
+        mouse = pygame.mouse.get_pos()
+        pressed = pygame.mouse.get_pressed()
+
+        offset = 5
+        length = 10
+        if pressed[0]:
+            pygame.draw.line(self.screen, colors.RED, (mouse[0], mouse[1] - offset), (mouse[0], mouse[1] - length))
+            pygame.draw.line(self.screen, colors.RED, (mouse[0], mouse[1] + offset), (mouse[0], mouse[1] + length))
+            pygame.draw.line(self.screen, colors.RED, (mouse[0] - offset, mouse[1]), (mouse[0] - length, mouse[1]))
+            pygame.draw.line(self.screen, colors.RED, (mouse[0] + offset, mouse[1]), (mouse[0] + length, mouse[1]))
+        else:
+            pygame.draw.line(self.screen, colors.BLACK, (mouse[0], mouse[1] - offset), (mouse[0], mouse[1] - length))
+            pygame.draw.line(self.screen, colors.BLACK, (mouse[0], mouse[1] + offset), (mouse[0], mouse[1] + length))
+            pygame.draw.line(self.screen, colors.BLACK, (mouse[0] - offset, mouse[1]), (mouse[0] - length, mouse[1]))
+            pygame.draw.line(self.screen, colors.BLACK, (mouse[0] + offset, mouse[1]), (mouse[0] + length, mouse[1]))
 
