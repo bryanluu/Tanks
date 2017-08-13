@@ -17,13 +17,12 @@ def run_game(width, height, fps, starting_scene):
 
     active_scene = starting_scene
 
-    initialized = False
 
     while active_scene:
 
-        if not initialized:
+        if not active_scene.initialized:
             active_scene.initGraphics(screen)
-            initialized = True
+            active_scene.initialized = True
 
         pressed_keys = pygame.key.get_pressed()
 
@@ -59,4 +58,4 @@ def run_game(width, height, fps, starting_scene):
 # The rest is code where you implement your game using the Scenes model
 
 
-run_game(500, 500, 60, Tanks())
+run_game(500, 500, 60, Start())
