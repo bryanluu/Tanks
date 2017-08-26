@@ -293,6 +293,8 @@ class Tanks(SceneBase):
         collided_objects = pygame.sprite.spritecollide(self.tank, self.baddies, False, self.tank.collided)
 
         for baddy in collided_objects:
+            if self.score > self.loadScore('score.save'):
+                self.saveScore('score.save')
             self.SwitchToScene(Start())
 
         for i, p in enumerate(self.projectiles):
@@ -464,3 +466,18 @@ class Tanks(SceneBase):
             pygame.draw.line(self.screen, colors.BLACK, (mouse[0] - offset, mouse[1]), (mouse[0] - length, mouse[1]))
             pygame.draw.line(self.screen, colors.BLACK, (mouse[0] + offset, mouse[1]), (mouse[0] + length, mouse[1]))
 
+    def saveScore(self, filename):
+        with open(filename, 'w') as f:
+            f.write("High-score,{0}".format(self.score))
+
+    def loadScore(self, filename):
+
+        try:
+            with open(filename, 'r') as f:
+                scoreline = f.readline()
+                score = scoreline.split(',')[1]
+        except:
+            score = 0
+            print("No save data found.")
+
+        return int(score)

@@ -3,10 +3,10 @@ from scenes import *
 import os
 
 # -------- For PiTFT calibration --------
-# os.environ['SDL_VIDEODRIVER'] = 'fbcon'
-# os.environ["SDL_FBDEV"] = "/dev/fb1"
-# os.environ["SDL_MOUSEDEV"] = "/dev/input/touchscreen"
-# os.environ["SDL_MOUSEDRV"] = "TSLIB"
+os.environ['SDL_VIDEODRIVER'] = 'fbcon'
+os.environ["SDL_FBDEV"] = "/dev/fb1"
+os.environ["SDL_MOUSEDEV"] = "/dev/input/touchscreen"
+os.environ["SDL_MOUSEDRV"] = "TSLIB"
 
 pygame.init()
 
@@ -58,4 +58,4 @@ def run_game(width, height, fps, starting_scene):
 # The rest is code where you implement your game using the Scenes model
 
 
-run_game(500, 500, 60, Start())
+run_game(320, 240, 60, Start())
