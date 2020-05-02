@@ -113,7 +113,7 @@ class Start(SceneBase):
         info = pygame.display.Info()
         screenWidth, screenHeight = info.current_w, info.current_h
 
-        font = pygame.font.Font('freesansbold.ttf', 30)
+        font = pygame.font.Font('freesansbold.ttf', 20)
 
         for i, option in enumerate(self.options):
             rect = pygame.Rect(int(screenWidth/2) - 50, int(screenHeight/2) - 100 + i*50, 100, 30)
@@ -180,7 +180,9 @@ class Button(pygame.sprite.Sprite):
     def renderButtonText(self, text, color):
         textsurf = self.font.render(text, True, color)
         textrect = textsurf.get_rect()
-        textrect.center = self.rect.center
+        # Put text in the middle of button
+        textrect.left = self.rect.width/2 - textrect.width/2
+        textrect.top = self.rect.height/2 - textrect.height/2
         self.image.blit(textsurf, textrect)
 
 
@@ -305,7 +307,7 @@ class Tanks(SceneBase):
             else:
                 if time.time() - self.tank.lastShootTime >= Laser.LASER_TIME:
                     p.kill()
-            
+
             if p.rect.y > screenHeight - p.rect.height or p.rect.x < 0 or p.rect.x > screenWidth - p.rect.width:
                 if type(p) is not Bomb:
                     self.explosions.append((p.explode(), p.pos()))

@@ -15,11 +15,25 @@ import sys
 import pygame
 from pygame.locals import Color, KEYUP, K_ESCAPE, K_RETURN
 import utilities
+from scenes import Button
+import colors
 
 surface = pygame.display.set_mode((256,256))
 FPS = 120
 frames = FPS / 12
-strips = utilities.SpriteStripAnim('explosion.png', (0,0,256,256), (8, 7), colorkey=-1, frames=frames, loop=True)
+strips = utilities.SpriteStripAnim('zombie.png', (0,0,256,256), (6, 1), colorkey=-1, frames=frames, loop=True)
+
+def action():
+    print('hi')
+
+pygame.init()
+
+font = pygame.font.Font('freesansbold.ttf', 10)
+button1 = Button(pygame.Rect(0, 0, 50, 30), action, font, colors.RED, 'O', colors.WHITE, colors.BLACK, 'O', colors.WHITE)
+button2 = Button(pygame.Rect(10, 50, 50, 30), action, font, colors.RED, 'X', colors.WHITE, colors.BLACK, 'X', colors.WHITE)
+buttons = pygame.sprite.Group()
+buttons.add(button1)
+buttons.add(button2)
 
 white = Color('white')
 clock = pygame.time.Clock()
@@ -32,8 +46,9 @@ while True:
                 sys.exit()
             elif e.key == K_RETURN:
                 strips.iter()
+    buttons.update()
     surface.fill(white)
-    surface.blit(image, (0,0))
+    # surface.blit(button.image, button.rect)
+    buttons.draw(surface)
     pygame.display.flip()
-    image = strips.next()
     clock.tick(FPS)
