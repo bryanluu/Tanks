@@ -50,5 +50,9 @@ while True:
     surface.fill(white)
     # surface.blit(button.image, button.rect)
     buttons.draw(surface)
+    x,y,w,h = image.get_rect()
+    surface.blit(image, image.get_rect())
+    image = strips.next()
+
     pygame.display.flip()
     clock.tick(FPS)

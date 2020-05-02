@@ -296,8 +296,10 @@ class Zombie(Enemy):
 
         # Create an image of the block, and fill it with a color.
         # This could also be an image loaded from the disk.
-        self.image = pygame.Surface([width, height])
-        self.image.fill(color)
+        self.strips = utilities.SpriteStripAnim('zombie.png', (0,0,256,256), (6, 1), colorkey=-1, frames=6, loop=True)
+        self.strips.iter()
+        self.image = self.strips.next()
+        self.image = pygame.transform.scale(self.image, (30, 30))
 
         # Fetch the rectangle object that has the dimensions of the image
         # Update the position of this object by setting the values of rect.x and rect.y
@@ -315,6 +317,9 @@ class Zombie(Enemy):
     def update(self):
         self.x -= self.speed
         self.rect.x = int(self.x)
+        self.image = self.strips.next()
+        self.image = pygame.transform.scale(self.image, (30, 30))
+
 
 
 class Bat(Enemy):
@@ -363,8 +368,10 @@ class Runner(Enemy):
 
         # Create an image of the block, and fill it with a color.
         # This could also be an image loaded from the disk.
-        self.image = pygame.Surface([width, height])
-        self.image.fill(color)
+        self.strips = utilities.SpriteStripAnim('runner.png', (0,0,300,300), (6, 1), colorkey=-1, frames=12, loop=True)
+        self.strips.iter()
+        self.image = self.strips.next()
+        self.image = pygame.transform.scale(self.image, (30, 30))
 
         # Fetch the rectangle object that has the dimensions of the image
         # Update the position of this object by setting the values of rect.x and rect.y
@@ -382,6 +389,8 @@ class Runner(Enemy):
     def update(self):
         self.x -= self.speed
         self.rect.x = int(self.x)
+        self.image = self.strips.next()
+        self.image = pygame.transform.scale(self.image, (30, 30))
 
 
 class Balloon(pygame.sprite.Sprite):
@@ -393,9 +402,13 @@ class Balloon(pygame.sprite.Sprite):
 
         # Create an image of the block, and fill it with a color.
         # This could also be an image loaded from the disk.
-        self.image = pygame.Surface((10, 20))
-        self.image.fill(color)
-        self.color = color
+        if color == colors.DARK_GREEN:
+            self.image = utilities.load_image('green_balloon.png')
+        elif color == colors.DARK_BLUE:
+            self.image = utilities.load_image('blue_balloon.png')
+        elif color == colors.DARK_RED:
+            self.image = utilities.load_image('red_balloon.png')
+        self.image = pygame.transform.scale(self.image, (10, 20))
 
         # Fetch the rectangle object that has the dimensions of the image
         # Update the position of this object by setting the values of rect.x and rect.y
