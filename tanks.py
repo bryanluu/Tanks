@@ -409,6 +409,7 @@ class Balloon(pygame.sprite.Sprite):
         elif color == colors.DARK_RED:
             self.image = utilities.load_image('red_balloon.png')
         self.image = pygame.transform.scale(self.image, (10, 20))
+        self.color = color
 
         # Fetch the rectangle object that has the dimensions of the image
         # Update the position of this object by setting the values of rect.x and rect.y
