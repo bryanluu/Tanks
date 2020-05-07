@@ -16,7 +16,7 @@ def run_game(width, height, fps, starting_scene):
     clock = pygame.time.Clock()
 
     active_scene = starting_scene
-
+    paused = None
 
     while active_scene:
 
@@ -41,7 +41,14 @@ def run_game(width, height, fps, starting_scene):
                     quit_attempt = True
 
             if quit_attempt:
-                active_scene.Terminate()
+                if isinstance(active_scene, Tanks):
+                    paused = active_scene
+                    active_scene.SwitchToScene(CheckExit(paused))
+                elif isinstance(active_scene, CheckExit):
+                    active_scene.SwitchToScene(paused)
+                    paused.next = paused
+                else:
+                    active_scene.Terminate()
             else:
                 filtered_events.append(event)
 
@@ -49,6 +56,7 @@ def run_game(width, height, fps, starting_scene):
         active_scene.Update()
         active_scene.Render()
 
+        # print(active_scene.next)
         active_scene = active_scene.next
 
         pygame.display.flip()
