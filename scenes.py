@@ -252,6 +252,11 @@ class Tanks(SceneBase):
                     self.killBaddies(bomb)
 
                 p1.power = 0.5
+            elif event.type == pygame.KEYDOWN:
+                alt_pressed = pressed_keys[pygame.K_LALT] or \
+                              pressed_keys[pygame.K_RALT]
+                if event.key == pygame.K_SPACE:
+                    self.SwitchToScene(Pause(self))
 
     def Update(self):
         mouse = pygame.mouse.get_pos()
@@ -517,7 +522,7 @@ class CheckExit(SceneBase):
 
             if i == 0:
                 def action():
-                    self.Terminate()
+                    self.SwitchToScene(Start())
             else:
                 def action():
                     self.SwitchToScene(self.paused)
@@ -540,6 +545,70 @@ class CheckExit(SceneBase):
         info = pygame.display.Info()
         screenWidth, screenHeight = info.current_w, info.current_h
         promptSurf = self.warningText.render("Quit without saving?", True, (0, 0, 0))
+        promptRect = promptSurf.get_rect()
+        promptRect.center = screenWidth/2, 50
+        self.screen.blit(promptSurf, promptRect)
+
+        self.buttons.draw(self.screen)
+        pygame.display.flip()
+
+
+class Pause(SceneBase):
+    def __init__(self, paused):
+        SceneBase.__init__(self)
+        self.next = self
+        self.paused = paused
+        self.options = ["Resume", "Quit"]
+        self.buttons = pygame.sprite.Group()
+
+    # only needs to be called once throughout main loop
+    def initGraphics(self, screen):
+        SceneBase.initGraphics(self, screen)
+        self.pauseText = pygame.font.Font('freesansbold.ttf', 25)
+        font = pygame.font.Font('freesansbold.ttf', 20)
+
+        info = pygame.display.Info()
+        screenWidth, screenHeight = info.current_w, info.current_h
+
+        for i, option in enumerate(self.options):
+            rect = pygame.Rect(int(screenWidth/2) - 50, int(screenHeight/2) + i*50, 100, 30)
+            passive_color = colors.BLACK
+            active_color = colors.RED
+
+            if i == 0:
+                def action():
+                    self.SwitchToScene(self.paused)
+                    self.paused.next = self.paused
+            else:
+                def action():
+                    self.SwitchToScene(Start())
+
+            button = Button(rect, action, font, active_color, option, colors.WHITE, passive_color, option, colors.WHITE)
+
+            self.buttons.add(button)
+
+    def ProcessInput(self, events, pressed_keys):
+        for event in events:
+            if event.type == pygame.KEYDOWN:
+                alt_pressed = pressed_keys[pygame.K_LALT] or \
+                              pressed_keys[pygame.K_RALT]
+                if event.key == pygame.K_SPACE:
+                    self.SwitchToScene(self.paused)
+                    self.paused.next = self.paused
+                elif event.key == pygame.K_ESCAPE:
+                    self.SwitchToScene(Start())
+
+
+    def Update(self):
+        self.buttons.update()
+
+    def Render(self):
+        self.screen.fill(colors.WHITE)
+        self.screen.set_alpha(100)
+
+        info = pygame.display.Info()
+        screenWidth, screenHeight = info.current_w, info.current_h
+        promptSurf = self.pauseText.render("PAUSED", True, (0, 0, 0))
         promptRect = promptSurf.get_rect()
         promptRect.center = screenWidth/2, 50
         self.screen.blit(promptSurf, promptRect)

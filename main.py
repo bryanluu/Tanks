@@ -47,6 +47,8 @@ def run_game(width, height, fps, starting_scene):
                 elif isinstance(active_scene, CheckExit):
                     active_scene.SwitchToScene(paused)
                     paused.next = paused
+                elif isinstance(active_scene, Pause):
+                    active_scene.next = Start()
                 else:
                     active_scene.Terminate()
             else:
