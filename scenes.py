@@ -33,12 +33,15 @@ class SceneBase:
 
 
 class BallScene(SceneBase):
+    DELAY = 0.1
+
     def __init__(self):
         SceneBase.__init__(self)
         self.v = geo.Vector2D.zero()
         self.a = geo.Vector2D(0, 1)
         self.elasticity = 0.8
         self.friction = 0.1
+        self.starttime = time.time()
 
     def initGraphics(self, screen):
         SceneBase.initGraphics(self, screen)
@@ -46,6 +49,14 @@ class BallScene(SceneBase):
         self.ball = utilities.load_image('ball.png')
         self.ballrect = self.ball.get_rect()
         self.ballrect.left, self.ballrect.top = 0, 0
+        width, height = 20, 20
+        self.obj = pygame.Surface([width, height])
+        self.obj.fill(colors.RED)
+        info = pygame.display.Info()
+        screenWidth, screenHeight = info.current_w, info.current_h
+        self.objrect = pygame.Rect(screenWidth / 4,
+                                   screenHeight - height,
+                                   width, height)
 
     def ProcessInput(self, events, pressed_keys):
         pass
@@ -58,7 +69,7 @@ class BallScene(SceneBase):
         screenWidth, screenHeight = info.current_w, info.current_h
 
         # follow mouse drag
-        if click[0]:
+        if time.time() - self.starttime > self.DELAY and click[0]:
             currentPos = geo.Vector2D(*mouse)
             self.v = currentPos - self.lastPos
             self.lastPos = currentPos
@@ -97,15 +108,19 @@ class BallScene(SceneBase):
         # For the sake of brevity, the title scene is a blank black screen
         self.screen.fill((255, 255, 255))
         self.screen.blit(self.ball, self.ballrect)
+        self.screen.blit(self.obj, self.objrect)
         pygame.display.flip()
 
 
 class Start(SceneBase):
+    BUTTON_DELAY = 0.1
+
     def __init__(self):
         SceneBase.__init__(self)
 
-        self.options = ['Start', 'Quit']
+        self.options = ['Start', 'Test', 'Quit']
         self.buttons = pygame.sprite.Group()
+        self.starttime = time.time()
 
     def initGraphics(self, screen):
         SceneBase.initGraphics(self, screen)
@@ -123,6 +138,9 @@ class Start(SceneBase):
             if i == 0:
                 def action():
                     self.SwitchToScene(Tanks())
+            elif i == 1:
+                def action():
+                    self.SwitchToScene(BallScene())
             else:
                 def action():
                     self.Terminate()
@@ -135,6 +153,8 @@ class Start(SceneBase):
         pass
 
     def Update(self):
+        if time.time() - self.starttime < self.BUTTON_DELAY:
+            return
         self.buttons.update()
 
     def Render(self):

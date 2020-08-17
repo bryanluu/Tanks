@@ -41,7 +41,8 @@ def run_game(width, height, fps, starting_scene):
                     quit_attempt = True
 
             if quit_attempt:
-                if isinstance(active_scene, Tanks):
+                if isinstance(active_scene, Tanks)\
+                        or isinstance(active_scene, BallScene):
                     paused = active_scene
                     active_scene.SwitchToScene(CheckExit(paused))
                 elif isinstance(active_scene, CheckExit):
